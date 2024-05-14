@@ -1,71 +1,74 @@
 #include <iostream>
-#include <vector>
 
+// Define the PIDController class
 class PIDController {
 private:
+    // Define private members
     double kp; // Proportional gain
     double ki; // Integral gain
     double kd; // Derivative gain
-    double prevError; // Previous error
-    double integral; // Integral of errors
+    double integral; // Integral term
+    double prev_error; // Previous error
 
 public:
     // Constructor
-    PIDController(double p, double i, double d)
-        : kp(p), ki(i), kd(d), prevError(0), integral(0) {}
+    PIDController(double proportional_gain, double integral_gain, double derivative_gain)
+        : kp(proportional_gain), ki(integral_gain), kd(derivative_gain), integral(0.0), prev_error(0.0) {}
 
-    // Compute control signal
-    double compute(double setpoint, double feedback, double dt) {
-        // Calculate error
-        double error = setpoint - feedback;
+    // Method to compute control signal
+    double computeControlSignal(double error, double dt) {
+        // Compute proportional term
+        double proportional_term = kp * error;
+
+        // Compute integral term (with anti-windup)
         integral += error * dt;
+        double integral_term = ki * integral;
 
-        // Proportional term
-        double proportionalTerm = kp * error;
-
-        // Integral term
-        double integralTerm = ki * integral;
-
-        // Derivative term
-        double derivativeTerm = kd * (error - prevError) / dt;
-
-        // Update previous error
-        prevError = error;
+        // Compute derivative term
+        double derivative_term = kd * (error - prev_error) / dt;
 
         // Compute control signal
-        double controlSignal = proportionalTerm + integralTerm + derivativeTerm;
+        double control_signal = proportional_term + integral_term + derivative_term;
 
-        return controlSignal;
+        // Update previous error for next iteration
+        prev_error = error;
+
+        return control_signal;
     }
 };
 
 int main() {
-    // PID gains
-    double kp = 0.5;
-    double ki = 0.2;
-    double kd = 0.1;
-
-    // Setpoint and initial feedback
-    double setpoint = 10.0;
-    double feedback = 0.0;
-
-    // Time parameters
-    double dt = 0.01; // Time step
-    double total_time = 10.0; // Total simulation time
+    // Define PID controller gains
+    double kp = 1.0;
+    double ki = 0.1;
+    double kd = 0.01;
 
     // Create PID controller object
-    PIDController pid(kp, ki, kd);
+    PIDController pid_controller(kp, ki, kd);
 
-    // Simulate PID control loop and write data to file
-    for (double t = 0; t <= total_time; t += dt) {
+    // Simulate control loop
+    double target_value = 100.0;
+    double current_value = 0.0;
+    double dt = 0.01; // Time step
+    double total_time = 10.0; // Total simulation time
+    double time = 0.0;
+
+    while (time < total_time) {
+        // Compute error
+        double error = target_value - current_value;
+
         // Compute control signal
-        double controlSignal = pid.compute(setpoint, feedback, dt);
+        double control_signal = pid_controller.computeControlSignal(error, dt);
 
-        // Apply control signal to the system (simulate)
-        feedback += controlSignal * dt;
+        // Apply control signal (simulate system response)
+        // Here, we assume the system response is instantaneous
+        current_value += control_signal * dt;
 
-        // Write time and feedback to file
-        std::cout << t << " " << feedback << std::endl;
+        // Print current value and control signal
+        std::cout << "Time: " << time << " | Current Value: " << current_value << " | Control Signal: " << control_signal << std::endl;
+
+        // Increment time
+        time += dt;
     }
 
     return 0;
